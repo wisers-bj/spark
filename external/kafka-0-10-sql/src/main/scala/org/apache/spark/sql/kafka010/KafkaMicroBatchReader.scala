@@ -230,9 +230,25 @@ private[kafka010] class KafkaMicroBatchReader(
         }
     }
     val total = sizes.values.sum.toDouble
+    /** in order to monitor kafka lag */
+    logInfo(s" kafka source startOffset: ${from} latestOffset: ${until}")
     if (total < 1) {
       until
-    } else {
+    } else if (total < 0) {
+      until.map {
+        case (tp, end) =>
+          val startOffset = from.get(tp).getOrElse(fromNew.get(tp).getOrElse(0L))
+          tp ->  {
+            if (end < startOffset) {
+              logInfo(s"end offset error,topic: ${tp} end offset less than start offset," +
+                s"return start offset")
+              startOffset
+            } else {
+              end
+            }
+          }
+      }
+    }else {
       until.map {
         case (tp, end) =>
           tp -> sizes.get(tp).map { size =>
