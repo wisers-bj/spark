@@ -248,7 +248,7 @@ private[kafka010] class KafkaMicroBatchReader(
             }
           }
       }
-    }else {
+    } else {
       until.map {
         case (tp, end) =>
           tp -> sizes.get(tp).map { size =>
